@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/component2">
+
+    <!-- 현재 칸 번호 -->
+    <TextView
+        android:id="@+id/tvTileTitle"
+        android:text="칸 정보"
+        android:textSize="60sp"
+        android:textStyle="bold"
+        android:textColor="#ff211b"
+        android:fontFamily="@font/maplestory_bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- 게임 설명 -->
+    <TextView
+        android:id="@+id/tvTileDescription"
+        android:text="여기에 게임 설명."
+        android:textSize="35sp"
+        android:layout_marginTop="16dp"
+        android:textColor="#ff9088"
+        android:fontFamily="@font/maplestory_bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- 결과 선택 화면으로 이동 버튼 -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnGoResult"
+        android:layout_width="221dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_white_round"
+        android:fontFamily="@font/maplestory_bold"
+        android:gravity="center"
+        android:text="게임 결과 선택하러 가기"
+        android:textColor="#ff211b"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+</LinearLayout>
