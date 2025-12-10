@@ -10,7 +10,7 @@ import android.widget.TextView;
 public class CongratsActivity extends AppCompatActivity {
 
     private int position;
-    private int lapCount;
+    //private int lapCount;
     private boolean skipTurn;
 
     @Override
@@ -23,7 +23,7 @@ public class CongratsActivity extends AppCompatActivity {
 
         Intent receivedIntent = getIntent();
         position = receivedIntent.getIntExtra("position", 12);
-        lapCount = receivedIntent.getIntExtra("lapCount", 0);
+        //lapCount = receivedIntent.getIntExtra("lapCount", 0);
         skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
 
         tvMessage.setText("🎉 12번 칸 도착! 축하합니다! 🎉");
@@ -31,7 +31,7 @@ public class CongratsActivity extends AppCompatActivity {
         btnGoTile.setOnClickListener(v -> {
             Intent goTile = new Intent(CongratsActivity.this, TileActivity.class);
             goTile.putExtra("position", position);
-            goTile.putExtra("lapCount", lapCount);
+            //goTile.putExtra("lapCount", lapCount);
             goTile.putExtra("skipTurn", skipTurn);
             startActivity(goTile);
             finish();

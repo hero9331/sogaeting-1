@@ -14,7 +14,7 @@ public class TileActivity extends AppCompatActivity {
     private Button btnGoResult;
 
     private int position;
-    private int lapCount;
+    // private int lapCount;
     private boolean skipTurn;
 
     @Override
@@ -29,7 +29,7 @@ public class TileActivity extends AppCompatActivity {
         // MainActivity에서 보낸 게임 상태 받기
         Intent receivedIntent = getIntent();
         position = receivedIntent.getIntExtra("position", 0);
-        lapCount = receivedIntent.getIntExtra("lapCount", 0);
+        // lapCount = receivedIntent.getIntExtra("lapCount", 0);
         skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
 
         String title = TileInfoProvider.getTitle(position);
@@ -38,13 +38,15 @@ public class TileActivity extends AppCompatActivity {
         tvTileTitle.setText(title);
         tvTileDescription.setText(desc);
 
+        // 버튼 텍스트 변경
+        btnGoResult.setText("게임 시작 🎮");
 
         btnGoResult.setOnClickListener(v -> {
-            Intent goResult = new Intent(TileActivity.this, ResultActivity.class);
-            goResult.putExtra("position", position);
-            goResult.putExtra("lapCount", lapCount);
-            goResult.putExtra("skipTurn", skipTurn);
-            startActivity(goResult);
+            // 게임 화면(GamePlayActivity)으로 이동
+            Intent goGame = new Intent(TileActivity.this, GamePlayActivity.class);
+            goGame.putExtra("position", position);
+            goGame.putExtra("skipTurn", skipTurn);
+            startActivity(goGame);
             finish();
         });
     }

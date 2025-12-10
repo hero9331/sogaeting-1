@@ -10,8 +10,6 @@ import android.os.Bundle;
 import android.text.TextPaint;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.app.AlertDialog;
 
 import java.util.Random;
 
@@ -23,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     // 게임 상태
     private int currentPosition = 1;
-    private boolean skipTurn = false; // 감옥(4번 칸) → 한 턴 쉬기
+    private boolean skipTurn = false;  // 감옥(4번 칸) → 한 턴 쉬기
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         TextPaint paint = tvDiceValue.getPaint();
         Shader textShader = new LinearGradient(
                 0, 0, 0, tvDiceValue.getTextSize(),
-                new int[] {
+                new int[]{
                         Color.parseColor("#ff9088"),
                         Color.parseColor("#ff211b")
                 },
@@ -58,23 +56,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void rollDiceAndMove() {
-        // 중복 클릭 방지
-        btnRollDice.setEnabled(false);
 
-        // 감옥 턴 스킵 (삭제됨 - 빈 공간 유지)
+        // 감옥 턴 스킵
+        if (skipTurn) {
+            skipTurn = false;
+            goToTile();
+            return;
+        }
 
         // 주사위 (1~3)
         Random random = new Random();
         int diceNumber = random.nextInt(3) + 1;
         tvDiceValue.setText(String.valueOf(diceNumber));
 
-        // 1.5초 딜레이 후 이동 로직 실행
-        new android.os.Handler().postDelayed(() -> {
-            processMove(diceNumber);
-        }, 1500);
-    }
-
-    private void processMove(int diceNumber) {
         int newPosition = currentPosition + diceNumber;
 
         // ===========================================================
@@ -82,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         // ===========================================================
         if (newPosition > 12) {
 
-            currentPosition = 1; // 시작 칸으로 이동
+            currentPosition = 1;  // 시작 칸으로 이동
             TemiController.moveToPosition(1);
             updateUI();
 
@@ -109,60 +103,44 @@ public class MainActivity extends AppCompatActivity {
         // ① 감옥 (4번)
         if (currentPosition == 4) {
             skipTurn = true;
-            goToIsland();
+            goToTile();
             return;
         }
 
-        // ② 앞으로 1칸 이동 (5, 8, 11)
-        if (currentPosition == 5 || currentPosition == 8 || currentPosition == 11) {
+        // ② 앞으로 1칸 이동 (5, 8)
+        if (currentPosition == 5 || currentPosition == 8) {
 
-            // 먼저 해당 칸(5, 8, 11)으로 이동했다는 것을 보여줌
+            currentPosition += 1;
+            if (currentPosition > 12) currentPosition = 1;
+
             TemiController.moveToPosition(currentPosition);
             updateUI();
 
-            // 설명 다이얼로그 띄우기
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("앞으로 한 칸!")
-                    .setMessage("축하합니다! 보너스 칸에 도착했습니다.\n앞으로 한 칸 더 이동합니다!")
-                    .setCancelable(false) // 버튼을 눌러야만 이동
-                    .setPositiveButton("이동하기", (dialog, which) -> {
-                        // 실제 이동 로직
-                        moveExtraOneStep();
-                    })
-                    .show();
+            goToTile();
             return;
         }
 
-        /*
-         * // ③ 앞으로 2칸 이동 (11) - 삭제됨
-         * ...
-         */
+        // ③ 앞으로 2칸 이동 (11)
+        if (currentPosition == 11) {
+
+            currentPosition += 2;
+
+            // 특수칸 이동은 종료 조건 아님 → 1로 순환
+            if (currentPosition > 12) currentPosition = 1;
+
+            TemiController.moveToPosition(currentPosition);
+            updateUI();
+
+            goToTile();
+            return;
+        }
 
         // 일반 칸 → TileActivity 이동
         goToTile();
     }
 
-    // 보너스 이동 처리 함수 분리
-    private void moveExtraOneStep() {
-        currentPosition += 1;
-        if (currentPosition > 12)
-            currentPosition = 1;
-
-        TemiController.moveToPosition(currentPosition);
-        updateUI();
-
-        goToTile();
-    }
-
     private void goToTile() {
         Intent intent = new Intent(MainActivity.this, TileActivity.class);
-        sendGameState(intent);
-        startActivity(intent);
-        finish();
-    }
-
-    private void goToIsland() {
-        Intent intent = new Intent(MainActivity.this, IslandActivity.class);
         sendGameState(intent);
         startActivity(intent);
         finish();
