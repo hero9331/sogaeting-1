@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/component2">
+
+    <!-- 제목 -->
+    <TextView
+        android:id="@+id/tvBonusTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="앞으로 한 칸!"
+        android:textSize="80sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/maplestory_bold"
+        android:textColor="#ff211b"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tvBonusDesc"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <!-- 설명 -->
+    <TextView
+        android:id="@+id/tvBonusDesc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="축하합니다! 보너스 칸에 도착했습니다.\n앞으로 한 칸 더 이동합니다!"
+        android:textSize="40sp"
+        android:textColor="#000000"
+        android:gravity="center"
+        android:layout_marginTop="30dp"
+        android:fontFamily="@font/maplestory_bold"
+        app:layout_constraintTop_toBottomOf="@+id/tvBonusTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnMove" />
+
+    <!-- 이동 버튼 -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnMove"
+        android:layout_width="200dp"
+        android:layout_height="60dp"
+        android:text="이동하기"
+        android:textColor="#ff211b"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/maplestory_bold"
+        android:layout_marginBottom="80dp"
+        android:gravity="center"
+        android:background="@drawable/bg_white_round"
+        android:elevation="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

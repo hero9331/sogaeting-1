@@ -17,7 +17,15 @@
         <activity android:name=".ResultActivity" />
         <activity android:name=".TileActivity" />
         <activity android:name=".GamePlayActivity" />
+        <activity android:name=".BonusMoveActivity" />
         <activity android:name=".IslandActivity" />
+        <activity android:name=".EyeGameActivity" />
+        <activity android:name=".HeartRateGameActivity" />
+        <activity android:name=".LightReactionGameActivity" />
+        <activity android:name=".PressureGameActivity" />
+        <activity android:name=".TimeGameActivity" />
+        <activity android:name=".PockyGameActivity" />
+        <activity android:name=".WaterGameActivity" />
 
         <activity
             android:name=".MainActivity"

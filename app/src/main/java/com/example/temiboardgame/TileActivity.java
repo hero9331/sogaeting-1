@@ -42,11 +42,38 @@ public class TileActivity extends AppCompatActivity {
         btnGoResult.setText("게임 시작 🎮");
 
         btnGoResult.setOnClickListener(v -> {
-            // 게임 화면(GamePlayActivity)으로 이동
-            Intent goGame = new Intent(TileActivity.this, GamePlayActivity.class);
-            goGame.putExtra("position", position);
-            goGame.putExtra("skipTurn", skipTurn);
-            startActivity(goGame);
+            Intent intent;
+            switch (position) {
+                case 1: // 눈싸움
+                    intent = new Intent(TileActivity.this, EyeGameActivity.class);
+                    break;
+                case 2: // 심박수
+                    intent = new Intent(TileActivity.this, HeartRateGameActivity.class);
+                    break;
+                case 3: // 불빛 반응
+                    intent = new Intent(TileActivity.this, LightReactionGameActivity.class);
+                    break;
+                case 6: // 압력
+                    intent = new Intent(TileActivity.this, PressureGameActivity.class);
+                    break;
+                case 7: // 시간
+                case 10: // 시간
+                    intent = new Intent(TileActivity.this, TimeGameActivity.class);
+                    break;
+                case 9: // 인간 빼빼로
+                    intent = new Intent(TileActivity.this, PockyGameActivity.class);
+                    break;
+                case 12: // 물 양
+                    intent = new Intent(TileActivity.this, WaterGameActivity.class);
+                    break;
+                default: // 그 외 (혹시 모를 예외, 기본 GamePlayActivity)
+                    intent = new Intent(TileActivity.this, GamePlayActivity.class);
+                    break;
+            }
+
+            intent.putExtra("position", position);
+            intent.putExtra("skipTurn", skipTurn);
+            startActivity(intent);
             finish();
         });
     }

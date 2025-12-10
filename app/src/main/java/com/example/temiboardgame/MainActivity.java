@@ -61,17 +61,46 @@ public class MainActivity extends AppCompatActivity {
         // 중복 클릭 방지
         btnRollDice.setEnabled(false);
 
-        // 감옥 턴 스킵 (삭제됨 - 빈 공간 유지)
+        // 주사위 굴리는 효과 (애니메이션)
+        final int[] animationCount = { 0 };
+        final int maxAnimationSteps = 15; // 숫자가 바뀌는 횟수
 
-        // 주사위 (1~3)
-        Random random = new Random();
-        int diceNumber = random.nextInt(3) + 1;
-        tvDiceValue.setText(String.valueOf(diceNumber));
+        android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
 
-        // 1.5초 딜레이 후 이동 로직 실행
-        new android.os.Handler().postDelayed(() -> {
-            processMove(diceNumber);
-        }, 1500);
+        Runnable diceAnimation = new Runnable() {
+            @Override
+            public void run() {
+                Random random = new Random();
+                // 애니메이션 중 보여줄 임시 숫자 (1~3)
+                int tempDice = random.nextInt(3) + 1;
+                tvDiceValue.setText(String.valueOf(tempDice));
+
+                animationCount[0]++;
+
+                if (animationCount[0] < maxAnimationSteps) {
+                    // 아직 애니메이션 중 -> 100ms 뒤에 다시 실행
+                    tvDiceValue.setTextSize(150); // 기본 크기
+                    handler.postDelayed(this, 100);
+                } else {
+                    // 애니메이션 종료 -> 최종 숫자 확정 및 강조 효과!
+                    int finalDice = random.nextInt(3) + 1;
+                    tvDiceValue.setText(String.valueOf(finalDice));
+
+                    // 💥 팍! 커지는 효과
+                    tvDiceValue.setTextSize(200);
+
+                    // 최종 숫자를 확인하도록 잠시 대기 후 이동 로직 실행
+                    handler.postDelayed(() -> {
+                        // 크기 원상 복구 및 이동
+                        tvDiceValue.setTextSize(150);
+                        processMove(finalDice);
+                    }, 1000); // 1초 대기
+                }
+            }
+        };
+
+        // 애니메이션 시작
+        handler.post(diceAnimation);
     }
 
     private void processMove(int diceNumber) {
@@ -120,16 +149,11 @@ public class MainActivity extends AppCompatActivity {
             TemiController.moveToPosition(currentPosition);
             updateUI();
 
-            // 설명 다이얼로그 띄우기
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("앞으로 한 칸!")
-                    .setMessage("축하합니다! 보너스 칸에 도착했습니다.\n앞으로 한 칸 더 이동합니다!")
-                    .setCancelable(false) // 버튼을 눌러야만 이동
-                    .setPositiveButton("이동하기", (dialog, which) -> {
-                        // 실제 이동 로직
-                        moveExtraOneStep();
-                    })
-                    .show();
+            // 별도의 보너스 화면으로 이동 (Activity 전환)
+            Intent intent = new Intent(MainActivity.this, BonusMoveActivity.class);
+            intent.putExtra("position", currentPosition);
+            startActivity(intent);
+            finish();
             return;
         }
 
