@@ -16,6 +16,9 @@
         <meta-data
             android:name="com.robotemi.sdk.metadata.SKILL"
             android:value="true" />
+        <meta-data
+            android:name="com.robotemi.sdk.metadata.KIOSK"
+            android:value="true" />
 
         <!-- ✅ 새로 추가된 화면 등록 -->
         <activity android:name=".GameFinishActivity" />

@@ -1,7 +1,7 @@
 package com.example.temiboardgame;
 
 import android.util.Log;
-// import com.robotemi.sdk.Robot; // Temi SDK import
+import com.robotemi.sdk.Robot; // Temi SDK import (활성화)
 
 public class TemiController {
 
@@ -9,7 +9,7 @@ public class TemiController {
     public static String getLocationNameForPosition(int position) {
         switch (position) {
             case 1:
-                return "home base"; // 시작점은 보통 home base
+                return "1"; // 사용자가 등록한 이름 "1"로 변경
             case 2:
                 return "2";
             case 3:
@@ -37,6 +37,19 @@ public class TemiController {
         }
     }
 
+    // 해당 위치가 Temi에 저장되어 있는지 확인
+    public static boolean isLocationSaved(String locationName) {
+        try {
+            Robot robot = Robot.getInstance();
+            if (robot != null && locationName != null) {
+                return robot.getLocations().contains(locationName);
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return false;
+    }
+
     public static void moveToPosition(int position) {
         String locationName = getLocationNameForPosition(position);
         if (locationName == null) {
@@ -46,22 +59,14 @@ public class TemiController {
 
         Log.d("TemiController", "테미 이동 시도: " + locationName);
 
-        /*
-         * try {
-         * Robot robot = Robot.getInstance();
-         * if (robot != null) {
-         * // 저장된 위치 목록에 있는지 확인 후 이동 (안전장치)
-         * if (robot.getLocations().contains(locationName)) {
-         * robot.goTo(locationName);
-         * } else {
-         * Log.e("TemiController", "저장되지 않은 위치: " + locationName);
-         * // 테스트용: 위치가 없으면 그냥 로그만 찍고 넘어감
-         * }
-         * }
-         * } catch (Exception e) {
-         * Log.e("TemiController", "Robot SDK Error", e);
-         * }
-         */
-        Log.d("TemiController", "[Emulator Mode] Robot.goTo skipped: " + locationName);
+        try {
+            Robot robot = Robot.getInstance();
+            if (robot != null) {
+                // 위치 목록 체크 없이 강제 이동 시도 (이름 불일치 문제 배제)
+                robot.goTo(locationName);
+            }
+        } catch (Exception e) {
+            Log.e("TemiController", "Robot SDK Error", e);
+        }
     }
 }
