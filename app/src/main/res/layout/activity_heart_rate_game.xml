@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/component2"
+    android:padding="24dp">
+
+    <!-- 제목 -->
+    <TextView
+        android:id="@+id/tvGameTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="심박수 게임 💓"
+        android:textSize="40sp"
+        android:textStyle="bold"
+        android:textColor="#ff211b"
+        android:fontFamily="@font/maplestory_bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp" />
+
+    <!-- ================= Player 1 영역 ================= -->
+    <TextView
+        android:id="@+id/label_p1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PLAYER 1"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        app:layout_constraintTop_toBottomOf="@id/tvGameTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="50dp" />
+
+    <TextView
+        android:id="@+id/tv_p1_bpm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="60sp"
+        android:textStyle="bold"
+        android:textColor="#ff211b"
+        app:layout_constraintTop_toBottomOf="@id/label_p1"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BPM"
+        android:textSize="20sp"
+        app:layout_constraintBaseline_toBaselineOf="@id/tv_p1_bpm"
+        app:layout_constraintStart_toEndOf="@id/tv_p1_bpm"
+        android:layout_marginStart="8dp"/>
+
+    <Button
+        android:id="@+id/btn_p1_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="기록 저장 💾"
+        app:layout_constraintTop_toBottomOf="@id/tv_p1_bpm"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/tv_p1_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="기록: 없음"
+        android:textSize="18sp"
+        android:textColor="#555555"
+        app:layout_constraintTop_toBottomOf="@id/btn_p1_save"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="10dp"/>
+
+
+    <!-- ================= Player 2 영역 (오른쪽 or 아래) ================= -->
+    <TextView
+        android:id="@+id/label_p2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PLAYER 2"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        app:layout_constraintTop_toTopOf="@id/label_p1"
+        app:layout_constraintEnd_toEndOf="parent" 
+        /> <!-- P1과 같은 높이, 오른쪽 정렬 -->
+
+    <TextView
+        android:id="@+id/tv_p2_bpm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="60sp"
+        android:textStyle="bold"
+        android:textColor="#2196F3"
+        app:layout_constraintTop_toBottomOf="@id/label_p2"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BPM"
+        android:textSize="20sp"
+        app:layout_constraintBaseline_toBaselineOf="@id/tv_p2_bpm"
+        app:layout_constraintEnd_toStartOf="@id/tv_p2_bpm"
+        android:layout_marginEnd="8dp"/>
+
+    <Button
+        android:id="@+id/btn_p2_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="기록 저장 💾"
+        app:layout_constraintTop_toBottomOf="@id/tv_p2_bpm"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/tv_p2_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="기록: 없음"
+        android:textSize="18sp"
+        android:textColor="#555555"
+        app:layout_constraintTop_toBottomOf="@id/btn_p2_save"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp"/>
+
+    <!-- 하단 게임 종료 버튼 -->
+    <Button
+        android:id="@+id/btnEndGame"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="결과 확인 (다음)"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:background="@drawable/bg_white_round"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="20dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

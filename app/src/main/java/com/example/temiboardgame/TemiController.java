@@ -9,7 +9,7 @@ public class TemiController {
     public static String getLocationNameForPosition(int position) {
         switch (position) {
             case 1:
-                return "start";
+                return "home base"; // 시작점은 보통 home base
             case 2:
                 return "2";
             case 3:
@@ -32,7 +32,6 @@ public class TemiController {
                 return "11";
             case 12:
                 return "12";
-
             default:
                 return null;
         }
@@ -45,12 +44,24 @@ public class TemiController {
             return;
         }
 
-        Log.d("TemiController", "테미 이동: " + locationName);
+        Log.d("TemiController", "테미 이동 시도: " + locationName);
 
-        // Robot robot = Robot.getInstance();
-        // if (robot != null) {
-        // robot.goTo(locationName); // Temi에 저장한 위치 이름과 정확히 같아야 함
-        // }
+        /*
+         * try {
+         * Robot robot = Robot.getInstance();
+         * if (robot != null) {
+         * // 저장된 위치 목록에 있는지 확인 후 이동 (안전장치)
+         * if (robot.getLocations().contains(locationName)) {
+         * robot.goTo(locationName);
+         * } else {
+         * Log.e("TemiController", "저장되지 않은 위치: " + locationName);
+         * // 테스트용: 위치가 없으면 그냥 로그만 찍고 넘어감
+         * }
+         * }
+         * } catch (Exception e) {
+         * Log.e("TemiController", "Robot SDK Error", e);
+         * }
+         */
         Log.d("TemiController", "[Emulator Mode] Robot.goTo skipped: " + locationName);
     }
 }

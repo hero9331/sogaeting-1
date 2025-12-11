@@ -55,6 +55,41 @@ public class MainActivity extends AppCompatActivity {
         updateUI();
 
         btnRollDice.setOnClickListener(v -> rollDiceAndMove());
+
+        // [테스트용] 시간 맞추기 게임 바로 가기
+        findViewById(R.id.btnTestTimeGame).setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, TimeGameActivity.class);
+            intent.putExtra("position", 10); // 임의의 칸 번호
+            startActivity(intent);
+        });
+
+        // [테스트용] 반응 속도 게임 바로 가기
+        findViewById(R.id.btnTestReactionGame).setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, LightReactionGameActivity.class);
+            intent.putExtra("position", 3); // 임의의 칸 번호
+            startActivity(intent);
+        });
+
+        // [테스트용] 압력 측정 게임 바로 가기
+        findViewById(R.id.btnTestPressureGame).setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, PressureGameActivity.class);
+            intent.putExtra("position", 6);
+            startActivity(intent);
+        });
+
+        // [테스트용] 빼빼로 게임 바로 가기
+        findViewById(R.id.btnTestPockyGame).setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, PockyGameActivity.class);
+            intent.putExtra("position", 4);
+            startActivity(intent);
+        });
+
+        // [테스트용] 심박수 게임 바로 가기
+        findViewById(R.id.btnTestHeartRateGame).setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, HeartRateGameActivity.class);
+            intent.putExtra("position", 5);
+            startActivity(intent);
+        });
     }
 
     private void rollDiceAndMove() {
@@ -179,7 +214,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void goToTile() {
-        Intent intent = new Intent(MainActivity.this, TileActivity.class);
+        // 칸별 게임 실행 로직
+        Intent intent;
+
+        // 4번(감옥), 5/8/11번(이동)은 이미 processMove에서 처리했으므로 여기서는 게임 위주로 배치
+        switch (currentPosition) {
+            case 3:
+                // [3번 칸] 반응 속도 게임
+                intent = new Intent(MainActivity.this, LightReactionGameActivity.class);
+                break;
+            case 5:
+                // [5번 칸] 심박수 게임 (보너스로 이동한 칸이라도 게임 실행)
+                intent = new Intent(MainActivity.this, HeartRateGameActivity.class);
+                break;
+            case 6:
+                // [6번 칸] 압력 측정 게임
+                intent = new Intent(MainActivity.this, PressureGameActivity.class);
+                break;
+            case 7:
+                // [7번 칸] 빼빼로 게임
+                intent = new Intent(MainActivity.this, PockyGameActivity.class);
+                break;
+            case 10:
+                // [10번 칸] 시간 맞추기 게임
+                intent = new Intent(MainActivity.this, TimeGameActivity.class);
+                break;
+            default:
+                // [그 외] 일반 설명 칸
+                intent = new Intent(MainActivity.this, TileActivity.class);
+                break;
+        }
+
         sendGameState(intent);
         startActivity(intent);
         finish();

@@ -1,7 +1,6 @@
 package com.example.temiboardgame;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -19,7 +18,7 @@ public class EyeGameActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_game_play); // 공통 레이아웃 사용
+        setContentView(R.layout.activity_game_play);
 
         tvGameTitle = findViewById(R.id.tvGameTitle);
         tvIng = findViewById(R.id.tvIng);
@@ -29,12 +28,28 @@ public class EyeGameActivity extends AppCompatActivity {
         position = receivedIntent.getIntExtra("position", 0);
         skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
 
-        tvGameTitle.setText("눈싸움 게임");
-        tvIng.setText("눈을 먼저 깜빡이는 사람이 패배! 👀\n(카메라가 눈을 감지합니다...)");
+        tvGameTitle.setText("눈싸움 게임 👀");
+        tvIng.setText("카메라가 얼굴을 찾고 있습니다...\n(준비되면 '눈 감지 테스트' 버튼 클릭)");
+
+        btnEndGame.setText("눈 감음 감지 (Test)");
+
+        initCamera();
 
         btnEndGame.setOnClickListener(v -> {
-            goToResult();
+            onEyesClosedDetected();
         });
+    }
+
+    // 1. build.gradle에 ML Kit (Face Detection) 추가 필요
+
+    private void initCamera() {
+        // TODO: 여기서 카메라를 켜고 얼굴 탐지를 시작하는 코드를 작성하세요.
+    }
+
+    private void onEyesClosedDetected() {
+        tvIng.setText("눈 감음 감지됨! 😵\n당신이 졌습니다!");
+        btnEndGame.setText("결과 확인");
+        btnEndGame.setOnClickListener(v -> goToResult());
     }
 
     private void goToResult() {

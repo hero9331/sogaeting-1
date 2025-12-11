@@ -56,7 +56,7 @@ public class TileInfoProvider {
             case 9:
                 return "눈을 감고 상대방에게 가까워져보세요 >.<";
             case 10:
-                return "지정된 양에 최대한 가깝게 물을 맞춰보세요!";
+                return "3초를 최대한 맞춰보세요! (2.5초~3.5초까지 인정)";
             case 11:
                 return "앞으로 한 칸 이동!";
             case 12:

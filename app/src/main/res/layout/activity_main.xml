@@ -28,6 +28,64 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <Button
+        android:id="@+id/btnTestTimeGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⏱️ 시간 맞추기 (Test)"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
+        app:layout_constraintEnd_toStartOf="@+id/btnTestReactionGame"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="20dp"
+        />
+
+    <Button
+        android:id="@+id/btnTestReactionGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⚡ 반응 속도 (Test)"
+        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
+        app:layout_constraintStart_toEndOf="@id/btnTestTimeGame"
+        app:layout_constraintEnd_toStartOf="@+id/btnTestPressureGame"
+        android:layout_marginBottom="20dp"
+        />
+
+    <!-- 추가된 테스트 버튼 -->
+    <Button
+        android:id="@+id/btnTestPressureGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="👇 압력 (Test)"
+        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
+        app:layout_constraintStart_toEndOf="@id/btnTestReactionGame"
+        app:layout_constraintEnd_toStartOf="@+id/btnTestPockyGame"
+        android:layout_marginBottom="20dp"
+        />
+
+    <Button
+        android:id="@+id/btnTestPockyGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📏 빼빼로 (Test)"
+        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
+        app:layout_constraintStart_toEndOf="@id/btnTestPressureGame"
+        app:layout_constraintEnd_toStartOf="@+id/btnTestHeartRateGame"
+        android:layout_marginBottom="20dp"
+        />
+
+    <!-- 추가된 테스트 버튼 -->
+    <Button
+        android:id="@+id/btnTestHeartRateGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💓 심박수 (Test)"
+        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
+        app:layout_constraintStart_toEndOf="@id/btnTestPockyGame"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="20dp"
+        />
+
     <TextView
         android:id="@+id/tvDiceValue"
         android:layout_width="wrap_content"
