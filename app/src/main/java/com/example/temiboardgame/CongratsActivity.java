@@ -9,32 +9,26 @@ import android.widget.TextView;
 
 public class CongratsActivity extends AppCompatActivity {
 
-    private int position;
-    // private int lapCount;
-    private boolean skipTurn;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_congrats);
 
         TextView tvMessage = findViewById(R.id.tvCongratsMessage);
-        Button btnGoTile = findViewById(R.id.btnGoTile);
 
-        Intent receivedIntent = getIntent();
-        position = receivedIntent.getIntExtra("position", 12);
-        // lapCount = receivedIntent.getIntExtra("lapCount", 0);
-        skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
+        // XML ID 변경 반영 (btnRestart)
+        Button btnRestart = findViewById(R.id.btnRestart);
 
-        tvMessage.setText("🎉 12번 칸 도착! 축하합니다! 🎉");
-        btnGoTile.setText("다시 시작하기");
+        tvMessage.setText("🎉 13번 칸 도착!\n축하합니다! 🎉");
+        tvMessage.setTextSize(80); // 텍스트 크기 대폭 확대 (80sp)
+        tvMessage.setTypeface(null, android.graphics.Typeface.BOLD); // 굵게 강조
 
-        btnGoTile.setOnClickListener(v -> {
-            Intent goTile = new Intent(CongratsActivity.this, TileActivity.class);
-            goTile.putExtra("position", position);
-            // goTile.putExtra("lapCount", lapCount);
-            goTile.putExtra("skipTurn", skipTurn);
-            startActivity(goTile);
+        btnRestart.setOnClickListener(v -> {
+            // 처음부터 다시 시작 (RESET_GAME)
+            Intent intent = new Intent(CongratsActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra("RESET_GAME", true);
+            startActivity(intent);
             finish();
         });
     }

@@ -53,8 +53,20 @@ public class LightReactionGameActivity extends AppCompatActivity {
                 .getReference();
 
         tvGameTitle.setText("불빛 반응 속도 ⚡");
-        tvIng.setText("화면이 빨갛게 변하면\n버튼을 누르세요!");
-        btnEndGame.setText("준비...");
+
+        // 초기화 버튼 연결
+        Button btnReset = findViewById(R.id.btnResetGame);
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> {
+                Intent intent = new Intent(LightReactionGameActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra("RESET_GAME", true);
+                startActivity(intent);
+                finish();
+            });
+        }
+        tvIng.setText("버튼이 빨갛게 변하면\n버튼을 누르세요!");
+        btnEndGame.setText("준비하세요...");
         btnEndGame.setEnabled(false);
 
         // 게임 시작 전 상태 초기화 (대기 상태 = 1)
@@ -93,31 +105,50 @@ public class LightReactionGameActivity extends AppCompatActivity {
         if (isGameEnded)
             return; // 이미 끝났으면 무시
 
+        boolean isSuccess = false;
+
         if (isLightOn) {
-            // 성공 (반응 속도 측정)
+            // 불 켜진 후 누름 -> 속도 측정
             isGameEnded = true;
             long reactionTime = System.currentTimeMillis() - startTime;
-            tvIng.setText("반응 속도: " + reactionTime + "ms");
-            btnEndGame.setText("성공! 🎉");
-            btnEndGame.setBackgroundColor(Color.BLUE);
+
+            if (reactionTime <= 1000) {
+                // 성공 (1000ms 이하)
+                isSuccess = true;
+                tvIng.setText("반응 속도: " + reactionTime + "ms\n(1000ms 이내 성공!)");
+                btnEndGame.setText("성공! 🎉");
+                btnEndGame.setBackgroundColor(Color.BLUE);
+            } else {
+                // 실패 (너무 느림)
+                isSuccess = false;
+                tvIng.setText("속도: " + reactionTime + "ms... 너무 느려요! 🐢\n(1000ms 안에 눌러야 해요)");
+                btnEndGame.setText("실패... 🐢");
+                btnEndGame.setBackgroundColor(Color.GRAY);
+            }
+
             btnEndGame.setEnabled(false);
 
-            // 아두이노 상태 복구 (다음 게임을 위해 1로 원복)
+            // 상태 복구
             mDatabase.child("gameState").setValue(1);
 
-            handler.postDelayed(this::goToResult, 1500);
+            // 결과 화면 이동 (성공 여부 전달)
+            final boolean finalResult = isSuccess;
+            handler.postDelayed(() -> goToResult(finalResult), 1500);
+
         } else {
             // 실패 (너무 빨리 누름)
             isGameEnded = true;
-            handler.removeCallbacksAndMessages(null); // 불 켜지는 타이머 취소
-            tvIng.setText("너무 빨랐어요! 땡! ❌");
-            btnEndGame.setText("실패...");
+            handler.removeCallbacksAndMessages(null); // 타이머 취소
+
+            tvIng.setText("너무 빨랐어요! 땡! ❌\n(불이 켜지면 누르세요)");
+            btnEndGame.setText("실패... ⚡");
+            btnEndGame.setBackgroundColor(Color.GRAY);
             btnEndGame.setEnabled(false);
 
-            // 실패 시에도 상태 복구
             mDatabase.child("gameState").setValue(1);
 
-            handler.postDelayed(this::goToResult, 1500);
+            // 실패 전달
+            handler.postDelayed(() -> goToResult(false), 1500);
         }
     }
 
@@ -133,14 +164,17 @@ public class LightReactionGameActivity extends AppCompatActivity {
         btnEndGame.setText("지금 눌러!! 🚨");
         btnEndGame.setEnabled(true);
 
-        // 확실하게 0이 아니도록 설정 (버튼 누름 대기)
         mDatabase.child("gameState").setValue(1);
     }
 
-    private void goToResult() {
+    private void goToResult(boolean isSuccess) {
         Intent goResult = new Intent(LightReactionGameActivity.this, ResultActivity.class);
         goResult.putExtra("position", position);
         goResult.putExtra("skipTurn", skipTurn);
+
+        // 자동 결과 판정 전달
+        goResult.putExtra("autoResult", isSuccess);
+
         startActivity(goResult);
         finish();
     }

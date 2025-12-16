@@ -2,7 +2,9 @@ package com.example.temiboardgame;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -24,6 +26,36 @@ public class PressureGameActivity extends AppCompatActivity {
     // Firebase
     private DatabaseReference mDatabase;
 
+    // 게임 로직
+    private long successStartTime = 0;
+    private boolean isInRange = false;
+    private boolean isSuccess = false;
+    private int currentPressure = 0; // 현재 압력값
+
+    // 타이머 핸들러 (지속적인 시간 체크용)
+    private Handler timerHandler = new Handler();
+    private Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isSuccess || !isInRange)
+                return;
+
+            long duration = System.currentTimeMillis() - successStartTime;
+            double seconds = duration / 1000.0;
+
+            // UI 실시간 업데이트 (값 + 시간)
+            tvIng.setText(String.format("현재 압력: %d\n🔥 유지 중: %.1f초...", currentPressure, seconds));
+            tvIng.setTextColor(Color.parseColor("#FF9800")); // 주황색
+
+            if (duration >= 3000) { // 3초 달성
+                handleSuccess();
+            } else {
+                // 0.1초 뒤에 다시 체크
+                timerHandler.postDelayed(this, 100);
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,46 +69,111 @@ public class PressureGameActivity extends AppCompatActivity {
         position = receivedIntent.getIntExtra("position", 0);
         skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
 
-        tvGameTitle.setText("압력 맞추기 👇");
-        tvIng.setText("아두이노 센서를 꾹 눌러보세요!\n(연결 대기 중...)");
+        tvGameTitle.setText("악수 압력 맞추기 🤝");
 
-        // Firebase 초기화 (명시적 URL)
-        mDatabase = FirebaseDatabase.getInstance("https://temiboardgame-60750-default-rtdb.firebaseio.com")
-                .getReference();
+        // 초기화 버튼 연결
+        Button btnReset = findViewById(R.id.btnResetGame);
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> {
+                Intent intent = new Intent(PressureGameActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra("RESET_GAME", true);
+                startActivity(intent);
+                finish();
+            });
+        }
 
-        // 아두이노 압력 센서값 수신 (pressure_sensor/adc_raw)
-        mDatabase.child("pressure_sensor").child("adc_raw").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                Object val = snapshot.getValue();
-                if (val != null) {
-                    String valStr = val.toString();
+        tvIng.setText("둘이 악수하여 압력을\n90 ~ 100 사이로\n3초간 유지하세요!");
 
-                    // 화면에 실시간 값 표시
-                    tvIng.setText("현재 압력(ADC): " + valStr + "\n꾹 눌러서 목표에 도달하세요!");
+        btnEndGame.setText("포기하기 (실패)");
+        btnEndGame.setBackgroundColor(Color.GRAY);
 
-                    // (옵션) 나중에 여기에 목표 도달 로직 추가 가능
-                    // int adcValue = Integer.parseInt(valStr);
-                    // if (adcValue > 800) { ... }
+        // Firebase 초기화
+        try {
+            mDatabase = FirebaseDatabase.getInstance("https://temiboardgame-60750-default-rtdb.firebaseio.com")
+                    .getReference();
+        } catch (Exception e) {
+        }
+
+        // 아두이노 센서값 수신
+        if (mDatabase != null) {
+            mDatabase.child("pressure_sensor").child("adc_raw").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (isSuccess)
+                        return;
+
+                    Object val = snapshot.getValue();
+                    if (val != null) {
+                        try {
+                            int pressure = Integer.parseInt(val.toString());
+                            checkPressure(pressure);
+                        } catch (NumberFormatException e) {
+                        }
+                    }
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError error) {
-                // 에러 무시 (로그는 찍지 않음)
-            }
-        });
+                @Override
+                public void onCancelled(DatabaseError error) {
+                }
+            });
+        }
 
-        btnEndGame.setOnClickListener(v -> {
-            goToResult();
-        });
+        btnEndGame.setOnClickListener(v -> goToResult(false));
     }
 
-    private void goToResult() {
+    private void checkPressure(int pressure) {
+        currentPressure = pressure; // 최신 값 저장
+
+        // 목표 범위: 90 ~ 100
+        if (pressure >= 90 && pressure <= 100) {
+            if (!isInRange) {
+                // 막 진입함 -> 타이머 시작
+                isInRange = true;
+                successStartTime = System.currentTimeMillis();
+                timerHandler.post(timerRunnable); // 타이머 루프 시작
+            }
+            // (이미 루프가 돌고 있으면 currentPressure만 업데이트됨)
+        } else {
+            // 범위 벗어남 -> 리셋 및 타이머 중지
+            isInRange = false;
+            timerHandler.removeCallbacks(timerRunnable); // 타이머 중지
+
+            if (pressure < 90) {
+                tvIng.setText("현재 압력: " + pressure + "\n(더 세게 꽉 잡으세요! 💪)");
+            } else {
+                tvIng.setText("현재 압력: " + pressure + "\n(너무 세요! 살살... 😌)");
+            }
+            tvIng.setTextColor(Color.BLACK);
+        }
+    }
+
+    private void handleSuccess() {
+        isSuccess = true;
+        timerHandler.removeCallbacks(timerRunnable);
+
+        tvIng.setText("성공! 3초 유지 완료! 🎉");
+        tvIng.setTextColor(Color.parseColor("#4CAF50")); // 초록색
+        btnEndGame.setEnabled(false);
+
+        new Handler().postDelayed(() -> goToResult(true), 1500);
+    }
+
+    private void goToResult(boolean isSuccessResult) {
+        timerHandler.removeCallbacks(timerRunnable);
+
         Intent goResult = new Intent(PressureGameActivity.this, ResultActivity.class);
         goResult.putExtra("position", position);
         goResult.putExtra("skipTurn", skipTurn);
+        goResult.putExtra("autoResult", isSuccessResult);
         startActivity(goResult);
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // 메모리 누수 방지
+        timerHandler.removeCallbacks(timerRunnable);
     }
 }

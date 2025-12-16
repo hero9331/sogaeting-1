@@ -14,7 +14,6 @@ public class TileActivity extends AppCompatActivity {
     private Button btnGoResult;
 
     private int position;
-    // private int lapCount;
     private boolean skipTurn;
 
     @Override
@@ -29,7 +28,6 @@ public class TileActivity extends AppCompatActivity {
         // MainActivity에서 보낸 게임 상태 받기
         Intent receivedIntent = getIntent();
         position = receivedIntent.getIntExtra("position", 0);
-        // lapCount = receivedIntent.getIntExtra("lapCount", 0);
         skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
 
         String title = TileInfoProvider.getTitle(position);
@@ -39,18 +37,20 @@ public class TileActivity extends AppCompatActivity {
         tvTileDescription.setText(desc);
 
         // 버튼 텍스트 변경
-        btnGoResult.setText("게임 시작 🎮");
+        btnGoResult.setText("다음으로 👉");
 
         btnGoResult.setOnClickListener(v -> {
+            // TileActivity는 설명을 보여주는 용도.
+            // 여기서 '게임 시작' 버튼을 누르면 해당 게임 Activity로 이동하거나,
+            // 게임이 없는 칸(시작점 등)인 경우 바로 Result(다음 턴)로 이동.
+
             Intent intent;
             switch (position) {
-                case 1: // 눈싸움
+                case 2: // 눈싸움 심박수
                     intent = new Intent(TileActivity.this, EyeGameActivity.class);
                     break;
-                case 2: // 심박수
-                    intent = new Intent(TileActivity.this, HeartRateGameActivity.class);
-                    break;
                 case 3: // 불빛 반응
+                case 12: // 불빛 반응
                     intent = new Intent(TileActivity.this, LightReactionGameActivity.class);
                     break;
                 case 6: // 압력
@@ -63,11 +63,10 @@ public class TileActivity extends AppCompatActivity {
                 case 9: // 인간 빼빼로
                     intent = new Intent(TileActivity.this, PockyGameActivity.class);
                     break;
-                case 12: // 물 양
-                    intent = new Intent(TileActivity.this, WaterGameActivity.class);
-                    break;
-                default: // 그 외 (혹시 모를 예외, 기본 GamePlayActivity)
-                    intent = new Intent(TileActivity.this, GamePlayActivity.class);
+
+                // 특수 칸이나 게임이 없는 칸(1번 등)은 바로 결과 화면(턴 종료)으로 이동
+                default:
+                    intent = new Intent(TileActivity.this, ResultActivity.class);
                     break;
             }
 

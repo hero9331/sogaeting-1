@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.temiboardgame">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -10,6 +11,7 @@
         android:label="TemiBoardGame"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        tools:replace="android:allowBackup"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         <!-- Temi SDK Metadata -->
@@ -21,21 +23,18 @@
             android:value="true" />
 
         <!-- ✅ 새로 추가된 화면 등록 -->
-        <activity android:name=".GameFinishActivity" />
         <activity android:name=".CongratsActivity" />
 
         <activity android:name=".ResultActivity" />
         <activity android:name=".TileActivity" />
-        <activity android:name=".GamePlayActivity" />
         <activity android:name=".BonusMoveActivity" />
         <activity android:name=".IslandActivity" />
         <activity android:name=".EyeGameActivity" />
-        <activity android:name=".HeartRateGameActivity" />
+
         <activity android:name=".LightReactionGameActivity" />
         <activity android:name=".PressureGameActivity" />
         <activity android:name=".TimeGameActivity" />
         <activity android:name=".PockyGameActivity" />
-        <activity android:name=".WaterGameActivity" />
 
         <activity
             android:name=".MainActivity"

@@ -7,6 +7,18 @@
     android:layout_height="match_parent"
     android:background="@drawable/component2">
 
+    <!-- 초기화 버튼 (우측 상단) -->
+    <Button
+        android:id="@+id/btnResetGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🔄 초기화"
+        android:textSize="16sp"
+        android:backgroundTint="#FF5722"
+        android:layout_margin="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnRollDice"
         android:layout_width="200dp"
@@ -16,7 +28,7 @@
         android:textSize="25sp"
         android:textStyle="bold"
         android:fontFamily="@font/maplestory_bold"
-        android:layout_marginBottom="80dp"
+        android:layout_marginBottom="120dp"
 
         android:gravity="center"
 
@@ -28,63 +40,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/btnTestTimeGame"
+    <!-- 테스트 버튼들 (개발용) -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="⏱️ 시간 맞추기 (Test)"
-        android:layout_marginEnd="10dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="10dp"
         app:layout_constraintBottom_toTopOf="@id/btnRollDice"
-        app:layout_constraintEnd_toStartOf="@+id/btnTestReactionGame"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginBottom="20dp"
-        />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <Button
-        android:id="@+id/btnTestReactionGame"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="⚡ 반응 속도 (Test)"
-        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
-        app:layout_constraintStart_toEndOf="@id/btnTestTimeGame"
-        app:layout_constraintEnd_toStartOf="@+id/btnTestPressureGame"
-        android:layout_marginBottom="20dp"
-        />
-
-    <!-- 추가된 테스트 버튼 -->
-    <Button
-        android:id="@+id/btnTestPressureGame"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="👇 압력 (Test)"
-        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
-        app:layout_constraintStart_toEndOf="@id/btnTestReactionGame"
-        app:layout_constraintEnd_toStartOf="@+id/btnTestPockyGame"
-        android:layout_marginBottom="20dp"
-        />
-
-    <Button
-        android:id="@+id/btnTestPockyGame"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="📏 빼빼로 (Test)"
-        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
-        app:layout_constraintStart_toEndOf="@id/btnTestPressureGame"
-        app:layout_constraintEnd_toStartOf="@+id/btnTestHeartRateGame"
-        android:layout_marginBottom="20dp"
-        />
-
-    <!-- 추가된 테스트 버튼 -->
-    <Button
-        android:id="@+id/btnTestHeartRateGame"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="💓 심박수 (Test)"
-        app:layout_constraintBottom_toTopOf="@id/btnRollDice"
-        app:layout_constraintStart_toEndOf="@id/btnTestPockyGame"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="20dp"
-        />
+        <Button android:id="@+id/btnTestTimeGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⏱️" />
+        <Button android:id="@+id/btnTestReactionGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚡" />
+        <Button android:id="@+id/btnTestPressureGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="👇" />
+        <Button android:id="@+id/btnTestPockyGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📏" />
+        <Button android:id="@+id/btnTestHeartRateGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💓" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvDiceValue"
@@ -110,11 +82,30 @@
         android:textColor="#ff211b"
         android:layout_marginTop="20dp"
         android:fontFamily="@font/maplestory_bold"
-
-
         app:layout_constraintTop_toBottomOf="@+id/tvDiceValue"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btnRollDice" />
+
+    <!-- [NEW] 하단 진행 상황판 (미니맵) -->
+    <HorizontalScrollView
+        android:id="@+id/svMap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/llMapContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:gravity="center_vertical">
+            <!-- Java 코드에서 동적으로 아이템 추가 -->
+        </LinearLayout>
+    </HorizontalScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

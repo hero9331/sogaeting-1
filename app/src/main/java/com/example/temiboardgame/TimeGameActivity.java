@@ -1,12 +1,16 @@
 package com.example.temiboardgame;
 
 import androidx.appcompat.app.AppCompatActivity;
+import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -44,11 +48,30 @@ public class TimeGameActivity extends AppCompatActivity {
         position = receivedIntent.getIntExtra("position", 0);
         skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
 
-        // Firebase 초기화 (명시적 URL 지정 - 연결 확실하게!)
-        mDatabase = FirebaseDatabase.getInstance("https://temiboardgame-60750-default-rtdb.firebaseio.com")
-                .getReference();
+        // Firebase 초기화
+        try {
+            mDatabase = FirebaseDatabase.getInstance("https://temiboardgame-60750-default-rtdb.firebaseio.com")
+                    .getReference();
+        } catch (Exception e) {
+            Toast.makeText(this, "Firebase Init Error", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        // 초기화 버튼 연결
+        Button btnReset = findViewById(R.id.btnResetGame);
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> {
+                Intent intent = new Intent(TimeGameActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra("RESET_GAME", true);
+                startActivity(intent);
+                finish();
+            });
+        }
+
         tvGameTitle.setText("시간 맞추기 ⏱️");
-        tvIng.setText("버튼을 눌러 3.00초에 맞춰보세요!\n(시작하려면 버튼 클릭)");
+        tvIng.setText("버튼을 눌러 3.00초에 맞춰보세요!\n(정확히 3초에 가까울수록 승리!)");
         btnEndGame.setText("시작하기");
 
         btnEndGame.setOnClickListener(v -> {
@@ -65,11 +88,9 @@ public class TimeGameActivity extends AppCompatActivity {
         mDatabase.child("sensor_data").child("switch_state").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                Object myText = snapshot.getValue(); // Object로 받아서 유연하게 처리
-
+                Object myText = snapshot.getValue();
                 if (myText != null) {
                     String valStr = myText.toString();
-
                     // "0"이나 "0.0"이면 정지 신호
                     if (isRunning && (valStr.equals("0") || valStr.equals("0.0"))) {
                         stopTimerAndFinish();
@@ -88,40 +109,84 @@ public class TimeGameActivity extends AppCompatActivity {
         isRunning = true;
         startTime = System.currentTimeMillis();
 
-        // [테스트를 위해 주석 처리] 시작할 때 강제로 1로 바꾸지 않음 (실시간 변경 테스트용)
-        // mDatabase.child("sensor_data").child("switch_state").setValue(1);
-
         btnEndGame.setText("멈춰! 🛑");
         tvIng.setText("시간이 흐르고 있습니다...\n??? 초");
     }
 
     private void stopTimerAndFinish() {
         if (!isRunning)
-            return; // 이미 멈췄으면 패스
+            return;
 
         isRunning = false;
         long endTime = System.currentTimeMillis();
 
-        // 네트워크 지연 보정: 약 400ms 차감
-        long duration = (endTime - startTime) - 400;
-        if (duration < 0)
-            duration = 0;
+        // 1. 네트워크 지연 보정: 0.5초(500ms) 차감
+        long durationRaw = endTime - startTime;
+        long durationCompensated = durationRaw - 500;
 
-        double elapsedSeconds = duration / 1000.0;
+        if (durationCompensated < 0)
+            durationCompensated = 0;
 
-        tvIng.setText(String.format("기록: %.2f초\n(통신 지연 -0.4초 보정)", elapsedSeconds));
+        double elapsedSeconds = durationCompensated / 1000.0;
+
+        // 2. 성공 여부 판정 (오차범위 +- 1초 -> 2.0초 ~ 4.0초 사이)
+        boolean isSuccess = (elapsedSeconds >= 2.0 && elapsedSeconds <= 4.0);
+
+        tvIng.setText(String.format("측정 종료!\n기록: %.2f초\n(보정 적용됨)", elapsedSeconds));
         btnEndGame.setEnabled(false); // 중복 클릭 방지
 
-        // 잠시 후 결과 화면으로 이동
-        handler.postDelayed(() -> {
-            goToResult();
-        }, 1500);
+        // 3. 결과 다이얼로그 띄우기
+        showResultDialog(isSuccess, elapsedSeconds);
     }
 
-    private void goToResult() {
+    private void showResultDialog(boolean isSuccess, double time) {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_time_game_result);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        dialog.setCancelable(false);
+
+        TextView tvIcon = dialog.findViewById(R.id.tvResultIcon);
+        TextView tvTitle = dialog.findViewById(R.id.tvResultTitle);
+        TextView tvTime = dialog.findViewById(R.id.tvResultTime);
+        Button btnConfirm = dialog.findViewById(R.id.btnConfirm);
+
+        if (isSuccess) {
+            tvIcon.setText("🎉");
+            tvTitle.setText("성공!");
+            tvTitle.setTextColor(Color.parseColor("#4CAF50")); // 초록색
+            tvTime.setText(String.format("완벽해요! %.2f초", time));
+        } else {
+            tvIcon.setText("😢");
+            tvTitle.setText("실패...");
+            tvTitle.setTextColor(Color.parseColor("#F44336")); // 빨간색
+            tvTime.setText(String.format("아쉬워요.. %.2f초\n(목표: 2.0 ~ 4.0초)", time));
+        }
+
+        btnConfirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            // 결과 화면으로 성공 여부 전달
+            goToResult(isSuccess);
+        });
+
+        handler.postDelayed(() -> {
+            if (!isFinishing()) {
+                dialog.show();
+            }
+        }, 500);
+    }
+
+    private void goToResult(boolean isSuccess) {
         Intent goResult = new Intent(TimeGameActivity.this, ResultActivity.class);
         goResult.putExtra("position", position);
         goResult.putExtra("skipTurn", skipTurn);
+
+        // 자동 결과 판정 (true: 성공, false: 실패)
+        goResult.putExtra("autoResult", isSuccess);
+
         startActivity(goResult);
         finish();
     }

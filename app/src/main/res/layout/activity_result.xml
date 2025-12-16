@@ -5,6 +5,58 @@
     android:layout_height="match_parent"
     android:background="@drawable/result">
 
+    <Button
+        android:id="@+id/btnResetGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🔄 초기화"
+        android:textSize="16sp"
+        android:backgroundTint="#FF5722"
+        android:layout_margin="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 자동 결과 표출용 텍스트 (기본 GONE) -->
+    <TextView
+        android:id="@+id/tvAutoResult"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="성공!!"
+        android:textSize="100sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:fontFamily="@font/maplestory_bold"
+        android:shadowColor="#000000"
+        android:shadowDx="5"
+        android:shadowDy="5"
+        android:shadowRadius="10"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.7" />
+
+    <!-- 재도전 전용 버튼 (기본 GONE) -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnRetry"
+        android:layout_width="250dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/bg_white_round"
+        android:backgroundTint="#FF9800"
+        android:elevation="15dp"
+        android:fontFamily="@font/maplestory_bold"
+        android:text="다시 도전하기 🔄"
+        android:textColor="#FFFFFF"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:cornerRadius="35dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvAutoResult"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnSuccess"
         android:layout_width="200dp"

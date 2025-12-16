@@ -9,7 +9,7 @@ import android.widget.Button;
 public class BonusMoveActivity extends AppCompatActivity {
 
     private Button btnMove;
-    private int startPosition; // 5, 8, 11 등 시작 위치
+    private int startPosition; // [누락된 변수 복구]
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,23 +18,27 @@ public class BonusMoveActivity extends AppCompatActivity {
 
         btnMove = findViewById(R.id.btnMove);
 
-        Intent receivedIntent = getIntent();
-        startPosition = receivedIntent.getIntExtra("position", 1);
+        // 현재 위치 받아오기 [누락된 로직 복구]
+        startPosition = getIntent().getIntExtra("position", 1);
+
+        // 초기화 버튼 연결
+        Button btnReset = findViewById(R.id.btnResetGame);
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> {
+                Intent intent = new Intent(BonusMoveActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra("RESET_GAME", true);
+                startActivity(intent);
+                finish();
+            });
+        }
 
         btnMove.setOnClickListener(v -> {
-            // 다시 메인으로 돌아가서 실제 이동 처리하도록 함
-            // 메인에서 onActivityResult나 플래그로 처리할 수도 있지만,
-            // 여기서는 MainActivity를 새로 시작하면서 상태를 넘겨주는 방식으로 함
-            // (기존 방식 유지: MainActivity가 켜지면서 위치 업데이트)
-
-            int nextPosition = startPosition + 1;
-            if (nextPosition > 12)
-                nextPosition = 1;
-
+            // 메인 액티비티로 돌아가서 "한 칸 더 이동" 로직 수행 요청
             Intent goMain = new Intent(BonusMoveActivity.this, MainActivity.class);
-            goMain.putExtra("position", nextPosition);
-            goMain.putExtra("skipTurn", false); // 보너스 칸은 스킵 없음
             goMain.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            goMain.putExtra("BONUS_MOVE", true); // 플래그 전달
+            goMain.putExtra("position", startPosition); // [중요] 현재 위치도 같이 전달!
             startActivity(goMain);
             finish();
         });

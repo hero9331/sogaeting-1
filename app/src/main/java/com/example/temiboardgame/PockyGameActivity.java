@@ -1,8 +1,11 @@
 package com.example.temiboardgame;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -20,6 +23,36 @@ public class PockyGameActivity extends AppCompatActivity {
 
     private int position;
     private boolean skipTurn;
+    private DatabaseReference mDatabase;
+
+    // 게임 로직
+    private long successStartTime = 0;
+    private boolean isInRange = false;
+    private boolean isSuccess = false;
+    private double currentDistance = 0.0; // 현재 거리 값
+
+    // 타이머 핸들러
+    private Handler timerHandler = new Handler();
+    private Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isSuccess || !isInRange)
+                return;
+
+            long duration = System.currentTimeMillis() - successStartTime;
+            double seconds = duration / 1000.0;
+
+            // UI 실시간 업데이트 (값 + 시간)
+            tvIng.setText(String.format("현재 거리: %.1f cm\n💕 유지 중: %.1f초...", currentDistance, seconds));
+            tvIng.setTextColor(Color.parseColor("#E91E63")); // 핑크색
+
+            if (duration >= 3000) { // 3초 달성
+                handleSuccess();
+            } else {
+                timerHandler.postDelayed(this, 100); // 0.1초 후 재실행
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,49 +68,103 @@ public class PockyGameActivity extends AppCompatActivity {
         skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
 
         tvGameTitle.setText("인간 빼빼로 📏");
-        tvIng.setText("서로 가까이 다가가세요...\n현재 거리: -- cm");
 
-        // Firebase 초기화 (명시적 URL)
-        DatabaseReference mDatabase = FirebaseDatabase
-                .getInstance("https://temiboardgame-60750-default-rtdb.firebaseio.com").getReference();
+        // 초기화 버튼 연결
+        Button btnReset = findViewById(R.id.btnResetGame);
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> {
+                Intent intent = new Intent(PockyGameActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra("RESET_GAME", true);
+                startActivity(intent);
+                finish();
+            });
+        }
 
-        // 거리 센서 값 수신 (sensor_data/distance_cm)
-        mDatabase.child("sensor_data").child("distance_cm").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                Object val = snapshot.getValue();
-                if (val != null) {
-                    String valStr = val.toString();
-                    tvIng.setText("현재 거리: " + valStr + " cm\n(더 가까이!)");
+        tvIng.setText("서로 가까이 붙어 10cm 이내를\n3초간 유지하세요!");
 
-                    // 거리 값에 따른 반응 (예: 5cm 이하 성공)
-                    try {
-                        double distance = Double.parseDouble(valStr);
-                        if (distance > 0 && distance <= 5.0) {
-                            tvIng.append("\n성공! 아주 가까워요! 💕");
+        btnEndGame.setText("포기하기 (실패)");
+        btnEndGame.setBackgroundColor(Color.GRAY);
+
+        try {
+            mDatabase = FirebaseDatabase
+                    .getInstance("https://temiboardgame-60750-default-rtdb.firebaseio.com").getReference();
+        } catch (Exception e) {
+        }
+
+        if (mDatabase != null) {
+            mDatabase.child("sensor_data").child("distance_cm").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (isSuccess)
+                        return;
+
+                    Object val = snapshot.getValue();
+                    if (val != null) {
+                        try {
+                            double distance = Double.parseDouble(val.toString());
+                            checkDistance(distance);
+                        } catch (NumberFormatException e) {
                         }
-                    } catch (NumberFormatException e) {
-                        // 숫자가 아닌 값이 들어올 경우 무시
                     }
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError error) {
-                // 에러 무시
-            }
-        });
+                @Override
+                public void onCancelled(DatabaseError error) {
+                }
+            });
+        }
 
-        btnEndGame.setOnClickListener(v -> {
-            goToResult();
-        });
+        btnEndGame.setOnClickListener(v -> goToResult(false));
     }
 
-    private void goToResult() {
+    private void checkDistance(double distance) {
+        currentDistance = distance; // 최신 값 저장
+
+        // 목표 범위: 0 < distance <= 10.0
+        if (distance > 0 && distance <= 10.0) {
+            if (!isInRange) {
+                // 막 진입함
+                isInRange = true;
+                successStartTime = System.currentTimeMillis();
+                timerHandler.post(timerRunnable);
+            }
+            // (이미 루프 돌고 있음)
+        } else {
+            // 범위 벗어남
+            isInRange = false;
+            timerHandler.removeCallbacks(timerRunnable);
+
+            tvIng.setText(String.format("현재 거리: %.1f cm\n(더 가까이 붙으세요! 10cm 이내)", distance));
+            tvIng.setTextColor(Color.BLACK);
+        }
+    }
+
+    private void handleSuccess() {
+        isSuccess = true;
+        timerHandler.removeCallbacks(timerRunnable);
+
+        tvIng.setText("성공! 3초 유지 완료! 💑");
+        tvIng.setTextColor(Color.parseColor("#4CAF50")); // 초록색
+        btnEndGame.setEnabled(false);
+
+        new Handler().postDelayed(() -> goToResult(true), 1500);
+    }
+
+    private void goToResult(boolean isSuccessResult) {
+        timerHandler.removeCallbacks(timerRunnable);
+
         Intent goResult = new Intent(PockyGameActivity.this, ResultActivity.class);
         goResult.putExtra("position", position);
         goResult.putExtra("skipTurn", skipTurn);
+        goResult.putExtra("autoResult", isSuccessResult);
         startActivity(goResult);
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        timerHandler.removeCallbacks(timerRunnable);
     }
 }

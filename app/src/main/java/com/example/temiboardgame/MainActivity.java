@@ -6,66 +6,347 @@ import android.graphics.LinearGradient;
 import android.graphics.Shader;
 import android.os.Bundle;
 import android.text.TextPaint;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.robotemi.sdk.Robot;
+import com.robotemi.sdk.TtsRequest;
+// import com.robotemi.sdk.listeners.OnAsrListener; // 제거 (구버전 호환)
 import com.robotemi.sdk.listeners.OnGoToLocationStatusChangedListener;
+import com.robotemi.sdk.SttLanguage;
+import androidx.annotation.NonNull;
 
 import java.util.Random;
 
-public class MainActivity extends AppCompatActivity implements OnGoToLocationStatusChangedListener {
+public class MainActivity extends AppCompatActivity implements Robot.AsrListener, OnGoToLocationStatusChangedListener {
 
     private TextView tvDiceValue;
     private TextView tvPosition;
     private Button btnRollDice;
+    private LinearLayout llMapContainer;
 
     // 게임 상태
     private int currentPosition = 1;
-    private boolean skipTurn = false; // 감옥(4번 칸) → 한 턴 쉬기
+    private boolean skipTurn = false;
+
+    // 초기화 중인지 체크
+    private boolean isResetting = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Robot 리스너 등록 (Temi가 이동을 완료했을 때 알림을 받기 위함)
-        try {
-            Robot.getInstance().addOnGoToLocationStatusChangedListener(this);
-        } catch (Exception e) {
-            // 에뮬레이터 등에서 실패 시 무시
-        }
-
         tvDiceValue = findViewById(R.id.tvDiceValue);
         tvPosition = findViewById(R.id.tvPosition);
         btnRollDice = findViewById(R.id.btnRollDice);
+        llMapContainer = findViewById(R.id.llMapContainer);
 
-        // 텍스트 그라데이션
+        initMiniMap();
+
         TextPaint paint = tvDiceValue.getPaint();
         Shader textShader = new LinearGradient(
                 0, 0, 0, tvDiceValue.getTextSize(),
-                new int[] {
-                        Color.parseColor("#ff9088"),
-                        Color.parseColor("#ff211b")
-                },
+                new int[] { Color.parseColor("#ff9088"), Color.parseColor("#ff211b") },
                 null, Shader.TileMode.CLAMP);
         tvDiceValue.getPaint().setShader(textShader);
 
-        // 이전 Activity에서 돌아왔을 때 상태 받기
         Intent receivedIntent = getIntent();
-        if (receivedIntent != null) {
-            currentPosition = receivedIntent.getIntExtra("position", 1);
-            skipTurn = receivedIntent.getBooleanExtra("skipTurn", false);
-        }
+        processIntent(receivedIntent);
 
         updateUI();
 
         btnRollDice.setOnClickListener(v -> rollDiceAndMove());
 
-        // [테스트용] 게임 바로 가기 버튼들
+        setupTestButtons();
+
+        // [Temi SDK 설정]
+        Robot robot = Robot.getInstance();
+        robot.addAsrListener(this);
+        robot.addOnGoToLocationStatusChangedListener(this);
+
+        // 키오스크 모드 요청 (앱 고정)
+        robot.requestToBeKioskApp();
+
+        // 타이틀 바 숨기기 (몰입감)
+        robot.hideTopBar(true);
+    }
+
+    // --- [음성 인식] ---
+    @Override
+    public void onAsrResult(@NonNull String asrResult, @NonNull SttLanguage sttLanguage) {
+        String text = asrResult.trim();
+
+        // "주사위", "굴려" 등 인식
+        if (text.contains("주사위") || text.contains("굴려") || text.contains("출발") || text.contains("GO")) {
+            runOnUiThread(() -> {
+                if (btnRollDice.isEnabled()) {
+                    Toast.makeText(this, "🗣️ 음성 명령 확인: " + text, Toast.LENGTH_SHORT).show();
+                    rollDiceAndMove();
+                }
+            });
+            Robot.getInstance().finishConversation();
+        }
+    }
+
+    // --- [이동 상태 리스너] ---
+    @Override
+    public void onGoToLocationStatusChanged(String location, String status, int descriptionId, String description) {
+        if (status.equals("complete")) {
+            runOnUiThread(() -> {
+                // 도착 알림
+                Toast.makeText(this, location + "번 칸 도착!", Toast.LENGTH_SHORT).show();
+
+                if (isResetting) {
+                    isResetting = false;
+                    return;
+                }
+
+                // 해당 칸의 게임 시작
+                goToTile();
+            });
+        }
+    }
+
+    private void initMiniMap() {
+        if (llMapContainer == null)
+            return;
+        llMapContainer.removeAllViews();
+
+        for (int i = 1; i <= 13; i++) {
+            TextView tv = new TextView(this);
+            tv.setText(String.valueOf(i));
+            tv.setGravity(Gravity.CENTER);
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            tv.setTextColor(Color.GRAY);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(100, 100);
+            params.setMargins(8, 0, 8, 0);
+            tv.setLayoutParams(params);
+            tv.setBackgroundResource(R.drawable.bg_white_round);
+            llMapContainer.addView(tv);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        processIntent(intent);
+    }
+
+    private void processIntent(Intent intent) {
+        if (intent != null) {
+            if (intent.getBooleanExtra("RESET_GAME", false)) {
+                resetGame();
+                return;
+            }
+            if (intent.getBooleanExtra("BONUS_MOVE", false)) {
+                if (intent.hasExtra("position"))
+                    currentPosition = intent.getIntExtra("position", 1);
+                processMove(1);
+                return;
+            }
+            if (intent.hasExtra("position"))
+                currentPosition = intent.getIntExtra("position", 1);
+            skipTurn = intent.getBooleanExtra("skipTurn", false);
+            updateUI();
+        }
+    }
+
+    private void resetGame() {
+        currentPosition = 1;
+        skipTurn = false;
+        isResetting = true;
+        updateUI();
+
+        // 로봇 초기 위치로 이동
+        TemiController.moveToPosition(1);
+
+        Toast.makeText(this, "게임이 초기화되었습니다 🔄", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Robot.getInstance().removeAsrListener(this);
+        Robot.getInstance().removeOnGoToLocationStatusChangedListener(this);
+    }
+
+    private void rollDiceAndMove() {
+        if (skipTurn) {
+            Toast.makeText(this, "무인도(감옥)에 있어 이번 턴을 쉽니다 ㅠㅠ", Toast.LENGTH_SHORT).show();
+            skipTurn = false;
+            btnRollDice.setEnabled(true);
+            return;
+        }
+        btnRollDice.setEnabled(false);
+
+        // Temi 음성 안내 (활성화)
+        Robot.getInstance().speak(TtsRequest.create("주사위를 굴립니다!", false));
+
+        final int[] animationCount = { 0 };
+        final int maxAnimationSteps = 15;
+        android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+
+        tvDiceValue.setTextColor(Color.parseColor("#ff211b"));
+
+        Runnable diceAnimation = new Runnable() {
+            @Override
+            public void run() {
+                Random random = new Random();
+                int tempDice = random.nextInt(3) + 1;
+                tvDiceValue.setText(String.valueOf(tempDice));
+
+                // 틱! 사운드
+                tvDiceValue.playSoundEffect(android.view.SoundEffectConstants.CLICK);
+
+                animationCount[0]++;
+
+                if (animationCount[0] < maxAnimationSteps) {
+                    tvDiceValue.setTextSize(150);
+                    handler.postDelayed(this, 100);
+                } else {
+                    int finalDice = random.nextInt(3) + 1;
+                    tvDiceValue.setText(String.valueOf(finalDice));
+                    tvDiceValue.setTextSize(200);
+                    // 띵! 사운드
+                    tvDiceValue.playSoundEffect(android.view.SoundEffectConstants.NAVIGATION_DOWN);
+
+                    handler.postDelayed(() -> {
+                        tvDiceValue.setTextSize(150);
+                        processMove(finalDice);
+                    }, 1000);
+                }
+            }
+        };
+        handler.post(diceAnimation);
+    }
+
+    private void processMove(int diceNumber) {
+        int newPosition = currentPosition + diceNumber;
+        if (newPosition >= 13)
+            newPosition = 13;
+
+        currentPosition = newPosition;
+        updateUI();
+
+        if (currentPosition == 4)
+            skipTurn = true;
+
+        // 실제 로봇 이동 명령
+        String targetLocation = TemiController.getLocationNameForPosition(currentPosition);
+
+        if (TemiController.isLocationSaved(targetLocation)) {
+            TemiController.moveToPosition(currentPosition);
+        } else {
+            // 저장되지 않은 위치 테스트용 (즉시 이동)
+            goToTile();
+        }
+    }
+
+    private void updateUI() {
+        if (currentPosition >= 13) {
+            tvPosition.setText("현재 칸: 13 (도착!)");
+        } else {
+            tvPosition.setText("현재 칸: " + currentPosition);
+        }
+        updateMiniMap();
+    }
+
+    private void updateMiniMap() {
+        if (llMapContainer == null)
+            return;
+
+        for (int i = 0; i < llMapContainer.getChildCount(); i++) {
+            TextView tv = (TextView) llMapContainer.getChildAt(i);
+            int mapNum = i + 1;
+
+            if (mapNum == currentPosition) {
+                tv.setTextColor(Color.WHITE);
+                tv.setBackgroundColor(Color.parseColor("#ff211b"));
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+                tv.setText("📍\n" + mapNum);
+            } else {
+                tv.setTextColor(Color.BLACK);
+                tv.setBackgroundColor(Color.WHITE);
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                tv.setText(String.valueOf(mapNum));
+            }
+        }
+
+        final android.widget.HorizontalScrollView sv = findViewById(R.id.svMap);
+        if (sv != null) {
+            sv.post(() -> {
+                int targetX = llMapContainer.getChildAt(currentPosition - 1).getLeft();
+                sv.smoothScrollTo(targetX - 400, 0);
+            });
+        }
+    }
+
+    private void goToTile() {
+        Intent intent = null;
+        switch (currentPosition) {
+            case 1:
+                return;
+            case 2:
+                intent = new Intent(MainActivity.this, EyeGameActivity.class);
+                break;
+            case 3:
+                intent = new Intent(MainActivity.this, LightReactionGameActivity.class);
+                break;
+            case 4:
+                intent = new Intent(MainActivity.this, IslandActivity.class);
+                break;
+            case 5:
+                intent = new Intent(MainActivity.this, BonusMoveActivity.class);
+                break;
+            case 6:
+                intent = new Intent(MainActivity.this, PressureGameActivity.class);
+                break;
+            case 7:
+                intent = new Intent(MainActivity.this, TimeGameActivity.class);
+                break;
+            case 8:
+                intent = new Intent(MainActivity.this, BonusMoveActivity.class);
+                break;
+            case 9:
+                intent = new Intent(MainActivity.this, PockyGameActivity.class);
+                break;
+            case 10:
+                intent = new Intent(MainActivity.this, TimeGameActivity.class);
+                break;
+            case 11:
+                intent = new Intent(MainActivity.this, BonusMoveActivity.class);
+                break;
+            case 12:
+                intent = new Intent(MainActivity.this, LightReactionGameActivity.class);
+                break;
+            case 13:
+                intent = new Intent(MainActivity.this, CongratsActivity.class);
+                break;
+            default:
+                Toast.makeText(this, "쉬어가는 칸입니다 🌿", Toast.LENGTH_SHORT).show();
+                return;
+        }
+
+        if (intent != null) {
+            sendGameState(intent);
+            startActivity(intent);
+        }
+    }
+
+    private void sendGameState(Intent intent) {
+        intent.putExtra("position", currentPosition);
+        intent.putExtra("skipTurn", skipTurn);
+    }
+
+    private void setupTestButtons() {
         findViewById(R.id.btnTestTimeGame).setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, TimeGameActivity.class);
             intent.putExtra("position", 10);
@@ -83,160 +364,16 @@ public class MainActivity extends AppCompatActivity implements OnGoToLocationSta
         });
         findViewById(R.id.btnTestPockyGame).setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, PockyGameActivity.class);
-            intent.putExtra("position", 4);
+            intent.putExtra("position", 9);
             startActivity(intent);
         });
         findViewById(R.id.btnTestHeartRateGame).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, HeartRateGameActivity.class);
-            intent.putExtra("position", 5);
+            Intent intent = new Intent(MainActivity.this, EyeGameActivity.class);
+            intent.putExtra("position", 2);
             startActivity(intent);
         });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        try {
-            Robot.getInstance().removeOnGoToLocationStatusChangedListener(this);
-        } catch (Exception e) {
-        }
-    }
-
-    /**
-     * Temi 이동 상태 변경 리스너
-     * COMPLETE 상태(이동 완료)가 되면 비로소 게임 화면을 실행합니다.
-     */
-    @Override
-    public void onGoToLocationStatusChanged(String location, String status, int descriptionId, String description) {
-        if (status.equals("complete")) {
-            runOnUiThread(() -> {
-                // 도착 알림
-                Toast.makeText(this, location + " 도착 완료!", Toast.LENGTH_SHORT).show();
-                // 도착 후에 게임 실행
-                goToTile();
-            });
-        }
-    }
-
-    private void rollDiceAndMove() {
-        // 중복 클릭 방지
-        btnRollDice.setEnabled(false);
-
-        // 주사위 굴리는 효과 (애니메이션)
-        final int[] animationCount = { 0 };
-        final int maxAnimationSteps = 15; // 숫자가 바뀌는 횟수
-
-        android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
-
-        Runnable diceAnimation = new Runnable() {
-            @Override
-            public void run() {
-                Random random = new Random();
-                int tempDice = random.nextInt(3) + 1;
-                tvDiceValue.setText(String.valueOf(tempDice));
-
-                animationCount[0]++;
-
-                if (animationCount[0] < maxAnimationSteps) {
-                    tvDiceValue.setTextSize(150);
-                    handler.postDelayed(this, 100);
-                } else {
-                    int finalDice = random.nextInt(3) + 1;
-                    tvDiceValue.setText(String.valueOf(finalDice));
-                    tvDiceValue.setTextSize(200);
-
-                    handler.postDelayed(() -> {
-                        tvDiceValue.setTextSize(150);
-                        processMove(finalDice);
-                    }, 1000);
-                }
-            }
-        };
-        handler.post(diceAnimation);
-    }
-
-    private void processMove(int diceNumber) {
-        int newPosition = currentPosition + diceNumber;
-
-        // 12 초과 처리 -> 처음으로
-        if (newPosition > 12) {
-            currentPosition = 1;
-            TemiController.moveToPosition(1);
-            updateUI();
-
-            Intent finishIntent = new Intent(MainActivity.this, CongratsActivity.class);
-            sendGameState(finishIntent);
-            startActivity(finishIntent);
-            finish();
-            return;
-        }
-
-        currentPosition = newPosition;
-        updateUI();
-
-        // ----------------------------------------------------
-        // [핵심] Temi 이동 가능 여부 체크
-        // ----------------------------------------------------
-        String targetLocation = TemiController.getLocationNameForPosition(currentPosition);
-
-        // Temi에 해당 위치("1"~"8")가 저장되어 있는지 확인
-        if (TemiController.isLocationSaved(targetLocation)) {
-            // 저장된 위치 -> 이동 명령 내림 (도착 시 리스너가 goToTile 호출)
-            TemiController.moveToPosition(currentPosition);
-        } else {
-            // 저장되지 않은 위치(9~12번 등) -> 이동 스킵하고 바로 게임 실행
-            // 이렇게 해야 1~8번 외의 칸에서도 앱이 멈추지 않음!
-            goToTile();
-        }
-    }
-
-    private void updateUI() {
-        tvPosition.setText("현재 칸: " + currentPosition);
-    }
-
-    private void goToTile() {
-        Intent intent;
-
-        switch (currentPosition) {
-            case 3:
-                intent = new Intent(MainActivity.this, LightReactionGameActivity.class);
-                break;
-            case 5:
-                intent = new Intent(MainActivity.this, HeartRateGameActivity.class);
-                break;
-            case 6:
-                intent = new Intent(MainActivity.this, PressureGameActivity.class);
-                break;
-            case 7:
-                intent = new Intent(MainActivity.this, PockyGameActivity.class);
-                break;
-            case 10:
-                intent = new Intent(MainActivity.this, TimeGameActivity.class);
-                break;
-            case 4: // 감옥
-                skipTurn = true;
-                intent = new Intent(MainActivity.this, IslandActivity.class);
-                break;
-            case 12: // 마지막 칸
-                intent = new Intent(MainActivity.this, TileActivity.class);
-                break;
-            case 8: // 보너스 이동
-            case 11:
-                intent = new Intent(MainActivity.this, BonusMoveActivity.class);
-                break;
-            default:
-                // [그 외] 일반 설명 칸
-                intent = new Intent(MainActivity.this, TileActivity.class);
-                break;
-        }
-
-        sendGameState(intent);
-        startActivity(intent);
-        finish();
-    }
-
-    private void sendGameState(Intent intent) {
-        intent.putExtra("position", currentPosition);
-        intent.putExtra("skipTurn", skipTurn);
+        findViewById(R.id.btnResetGame).setOnClickListener(v -> {
+            resetGame();
+        });
     }
 }
