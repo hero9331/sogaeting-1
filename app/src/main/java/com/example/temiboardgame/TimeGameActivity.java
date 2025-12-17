@@ -91,8 +91,9 @@ public class TimeGameActivity extends AppCompatActivity {
                 Object myText = snapshot.getValue();
                 if (myText != null) {
                     String valStr = myText.toString();
-                    // "0"이나 "0.0"이면 정지 신호
-                    if (isRunning && (valStr.equals("0") || valStr.equals("0.0"))) {
+                    // "0"이나 "0.0", "1", "1.0" 등 값이 바뀌면 정지 신호로 간주
+                    if (isRunning && (valStr.equals("0") || valStr.equals("0.0") || valStr.equals("1")
+                            || valStr.equals("1.0"))) {
                         stopTimerAndFinish();
                     }
                 }

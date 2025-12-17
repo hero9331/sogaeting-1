@@ -33,6 +33,7 @@ public class LightReactionGameActivity extends AppCompatActivity {
 
     private DatabaseReference mDatabase;
     private boolean isGameEnded = false; // 중복 실행 방지
+    private String lastSwitchValue = null; // 마지막 스위치 값 저장 (변화 감지용)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,9 +88,19 @@ public class LightReactionGameActivity extends AppCompatActivity {
                 if (myText != null) {
                     String valStr = myText.toString();
 
-                    // "0"이나 0.0 등 모든 형태의 0을 체크
-                    if (valStr.equals("0") || valStr.equals("0.0")) {
-                        handleButtonPress();
+                    // 최초 실행 시 값 저장만 하고 무시
+                    if (lastSwitchValue == null) {
+                        lastSwitchValue = valStr;
+                        return;
+                    }
+
+                    // 이전 값과 다르면(변화 발생 시) 버튼 눌림으로 처리
+                    if (!valStr.equals(lastSwitchValue)) {
+                        lastSwitchValue = valStr;
+                        // 0 또는 1로 변했을 때 모두 처리
+                        if (valStr.equals("0") || valStr.equals("0.0") || valStr.equals("1") || valStr.equals("1.0")) {
+                            handleButtonPress();
+                        }
                     }
                 }
             }

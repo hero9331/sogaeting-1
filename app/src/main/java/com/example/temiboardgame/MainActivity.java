@@ -67,15 +67,17 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
         setupTestButtons();
 
         // [Temi SDK 설정]
-        Robot robot = Robot.getInstance();
-        robot.addAsrListener(this);
-        robot.addOnGoToLocationStatusChangedListener(this);
+        if (!TemiController.IS_VM_MODE) {
+            Robot robot = Robot.getInstance();
+            robot.addAsrListener(this);
+            robot.addOnGoToLocationStatusChangedListener(this);
 
-        // 키오스크 모드 요청 (앱 고정)
-        robot.requestToBeKioskApp();
+            // 키오스크 모드 요청 (앱 고정)
+            // robot.requestToBeKioskApp(); // 필요한 경우 주석 해제
 
-        // 타이틀 바 숨기기 (몰입감)
-        robot.hideTopBar(true);
+            // 타이틀 바 숨기기 (몰입감)
+            robot.hideTopBar(true);
+        }
     }
 
     // --- [음성 인식] ---
@@ -91,8 +93,11 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
                     rollDiceAndMove();
                 }
             });
-            Robot.getInstance().finishConversation();
+            if (!TemiController.IS_VM_MODE) {
+                Robot.getInstance().finishConversation();
+            }
         }
+
     }
 
     // --- [이동 상태 리스너] ---
@@ -174,8 +179,10 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Robot.getInstance().removeAsrListener(this);
-        Robot.getInstance().removeOnGoToLocationStatusChangedListener(this);
+        if (!TemiController.IS_VM_MODE) {
+            Robot.getInstance().removeAsrListener(this);
+            Robot.getInstance().removeOnGoToLocationStatusChangedListener(this);
+        }
     }
 
     private void rollDiceAndMove() {
@@ -187,14 +194,15 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
         }
         btnRollDice.setEnabled(false);
 
-        // Temi 음성 안내 (활성화)
-        Robot.getInstance().speak(TtsRequest.create("주사위를 굴립니다!", false));
-
         final int[] animationCount = { 0 };
-        final int maxAnimationSteps = 15;
+        // 애니메이션 스텝 수 증가 (더 부드러운 감속을 위해)
+        final int maxAnimationSteps = 20;
         android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
 
         tvDiceValue.setTextColor(Color.parseColor("#ff211b"));
+
+        // 초기 딜레이 (빠르게 시작)
+        final int[] currentDelay = { 50 };
 
         Runnable diceAnimation = new Runnable() {
             @Override
@@ -203,20 +211,35 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
                 int tempDice = random.nextInt(3) + 1;
                 tvDiceValue.setText(String.valueOf(tempDice));
 
-                // 틱! 사운드
+                // 틱! 사운드 (점점 느려지는 효과와 함께) & 진동
                 tvDiceValue.playSoundEffect(android.view.SoundEffectConstants.CLICK);
+                try {
+                    tvDiceValue.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
+                } catch (Exception e) {
+                    // 진동 지원 안함 무시
+                }
 
                 animationCount[0]++;
 
                 if (animationCount[0] < maxAnimationSteps) {
                     tvDiceValue.setTextSize(150);
-                    handler.postDelayed(this, 100);
+
+                    // 점진적으로 딜레이 증가 (물리적 감속 효과)
+                    // 예: 50 -> 60 -> 72 -> 86 ...
+                    currentDelay[0] = (int) (currentDelay[0] * 1.15);
+
+                    handler.postDelayed(this, currentDelay[0]);
                 } else {
                     int finalDice = random.nextInt(3) + 1;
                     tvDiceValue.setText(String.valueOf(finalDice));
                     tvDiceValue.setTextSize(200);
-                    // 띵! 사운드
+                    // 띵! 사운드 (결과 확정 강조)
                     tvDiceValue.playSoundEffect(android.view.SoundEffectConstants.NAVIGATION_DOWN);
+                    try {
+                        tvDiceValue.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                    } catch (Exception e) {
+                        // ignore
+                    }
 
                     handler.postDelayed(() -> {
                         tvDiceValue.setTextSize(150);
