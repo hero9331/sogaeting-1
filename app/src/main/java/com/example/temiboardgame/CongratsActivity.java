@@ -19,7 +19,7 @@ public class CongratsActivity extends AppCompatActivity {
         // XML ID 변경 반영 (btnRestart)
         Button btnRestart = findViewById(R.id.btnRestart);
 
-        tvMessage.setText("🎉 13번 칸 도착!\n축하합니다! 🎉");
+        tvMessage.setText("마지막칸 도착!\n축하합니다! 🎉");
         tvMessage.setTextSize(80); // 텍스트 크기 대폭 확대 (80sp)
         tvMessage.setTypeface(null, android.graphics.Typeface.BOLD); // 굵게 강조
 

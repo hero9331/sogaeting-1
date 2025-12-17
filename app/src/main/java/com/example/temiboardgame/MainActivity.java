@@ -29,7 +29,6 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
     private TextView tvDiceValue;
     private TextView tvPosition;
     private Button btnRollDice;
-    private LinearLayout llMapContainer;
 
     // 게임 상태
     private int currentPosition = 1;
@@ -46,9 +45,6 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
         tvDiceValue = findViewById(R.id.tvDiceValue);
         tvPosition = findViewById(R.id.tvPosition);
         btnRollDice = findViewById(R.id.btnRollDice);
-        llMapContainer = findViewById(R.id.llMapContainer);
-
-        initMiniMap();
 
         TextPaint paint = tvDiceValue.getPaint();
         Shader textShader = new LinearGradient(
@@ -64,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
 
         btnRollDice.setOnClickListener(v -> rollDiceAndMove());
 
-        setupTestButtons();
+        setupResetButton();
 
         // [Temi SDK 설정]
         if (!TemiController.IS_VM_MODE) {
@@ -116,25 +112,6 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
                 // 해당 칸의 게임 시작
                 goToTile();
             });
-        }
-    }
-
-    private void initMiniMap() {
-        if (llMapContainer == null)
-            return;
-        llMapContainer.removeAllViews();
-
-        for (int i = 1; i <= 13; i++) {
-            TextView tv = new TextView(this);
-            tv.setText(String.valueOf(i));
-            tv.setGravity(Gravity.CENTER);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-            tv.setTextColor(Color.GRAY);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(100, 100);
-            params.setMargins(8, 0, 8, 0);
-            tv.setLayoutParams(params);
-            tv.setBackgroundResource(R.drawable.bg_white_round);
-            llMapContainer.addView(tv);
         }
     }
 
@@ -275,41 +252,11 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
 
     private void updateUI() {
         if (currentPosition >= 13) {
-            tvPosition.setText("현재 칸: 13 (도착!)");
+            tvPosition.setText(""); // 13번 칸 도착 시 텍스트 숨김 (축하 화면만 표시)
         } else {
             tvPosition.setText("현재 칸: " + currentPosition);
         }
-        updateMiniMap();
-    }
 
-    private void updateMiniMap() {
-        if (llMapContainer == null)
-            return;
-
-        for (int i = 0; i < llMapContainer.getChildCount(); i++) {
-            TextView tv = (TextView) llMapContainer.getChildAt(i);
-            int mapNum = i + 1;
-
-            if (mapNum == currentPosition) {
-                tv.setTextColor(Color.WHITE);
-                tv.setBackgroundColor(Color.parseColor("#ff211b"));
-                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
-                tv.setText("📍\n" + mapNum);
-            } else {
-                tv.setTextColor(Color.BLACK);
-                tv.setBackgroundColor(Color.WHITE);
-                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                tv.setText(String.valueOf(mapNum));
-            }
-        }
-
-        final android.widget.HorizontalScrollView sv = findViewById(R.id.svMap);
-        if (sv != null) {
-            sv.post(() -> {
-                int targetX = llMapContainer.getChildAt(currentPosition - 1).getLeft();
-                sv.smoothScrollTo(targetX - 400, 0);
-            });
-        }
     }
 
     private void goToTile() {
@@ -369,34 +316,10 @@ public class MainActivity extends AppCompatActivity implements Robot.AsrListener
         intent.putExtra("skipTurn", skipTurn);
     }
 
-    private void setupTestButtons() {
-        findViewById(R.id.btnTestTimeGame).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, TimeGameActivity.class);
-            intent.putExtra("position", 10);
-            startActivity(intent);
-        });
-        findViewById(R.id.btnTestReactionGame).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, LightReactionGameActivity.class);
-            intent.putExtra("position", 3);
-            startActivity(intent);
-        });
-        findViewById(R.id.btnTestPressureGame).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, PressureGameActivity.class);
-            intent.putExtra("position", 6);
-            startActivity(intent);
-        });
-        findViewById(R.id.btnTestPockyGame).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, PockyGameActivity.class);
-            intent.putExtra("position", 9);
-            startActivity(intent);
-        });
-        findViewById(R.id.btnTestHeartRateGame).setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, EyeGameActivity.class);
-            intent.putExtra("position", 2);
-            startActivity(intent);
-        });
-        findViewById(R.id.btnResetGame).setOnClickListener(v -> {
-            resetGame();
-        });
+    private void setupResetButton() {
+        android.view.View btnReset = findViewById(R.id.btnResetGame);
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> resetGame());
+        }
     }
 }

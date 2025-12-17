@@ -6,7 +6,7 @@ import java.util.List;
 public class TemiController {
 
     // 가상머신(VM) 모드 여부: true로 설정 시 로봇 SDK 호출 차단
-    public static final boolean IS_VM_MODE = true;
+    public static final boolean IS_VM_MODE = false;
 
     // 로봇 인스턴스
     private static Robot getRobot() {
